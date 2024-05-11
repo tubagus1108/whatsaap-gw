@@ -4,6 +4,7 @@ namespace App\Services\Impl;
 
 use App\Services\WhatsappService;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class WhatsappServiceImpl implements WhatsappService
 {
@@ -31,6 +32,7 @@ class WhatsappServiceImpl implements WhatsappService
     {
         try {
             $results = Http::withOptions(['verify' => false])->asForm()->post($this->url . $route, $data);
+            Log::info($results);
             return json_decode($results->body());
         } catch (\Throwable $th) {
             throw $th;
@@ -52,11 +54,13 @@ class WhatsappServiceImpl implements WhatsappService
 
     public function sendText($request, $receiver): object
     {
-        return $this->sendRequest(self::ROUTE_SEND_TEXT, [
+        $data = $this->sendRequest(self::ROUTE_SEND_TEXT, [
             'token' => $request->sender,
             'number' => $receiver,
             'text' => $request->message,
         ]);
+        Log::info("=== DATA ===",[$data]);
+        return $data;
     }
 
 
