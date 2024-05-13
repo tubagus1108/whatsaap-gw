@@ -4,7 +4,6 @@ namespace App\Services\Impl;
 
 use App\Services\WhatsappService;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class WhatsappServiceImpl implements WhatsappService
 {
@@ -28,11 +27,10 @@ class WhatsappServiceImpl implements WhatsappService
         $this->url = env('WA_URL_SERVER');
     }
 
-    private function sendRequest($route, $data): mixed
+    private function sendRequest($route, $data): object
     {
         try {
             $results = Http::withOptions(['verify' => false])->asForm()->post($this->url . $route, $data);
-            Log::info($results);
             return json_decode($results->body());
         } catch (\Throwable $th) {
             throw $th;
@@ -52,19 +50,17 @@ class WhatsappServiceImpl implements WhatsappService
         ]);
     }
 
-    public function sendText($request, $receiver): object
+    public function sendText($request, $receiver): object | bool
     {
-        $data = $this->sendRequest(self::ROUTE_SEND_TEXT, [
+        return $this->sendRequest(self::ROUTE_SEND_TEXT, [
             'token' => $request->sender,
             'number' => $receiver,
             'text' => $request->message,
         ]);
-        Log::info("=== DATA ===",[$data]);
-        return $data;
     }
 
 
-    public function sendMedia($request, $receiver): object
+    public function sendMedia($request, $receiver): object | bool
     {
         // GET FILE NAME from $request->url
         $fileName = explode('/', $request->url);
@@ -84,7 +80,7 @@ class WhatsappServiceImpl implements WhatsappService
     }
 
 
-    public function sendButton($request, $receiver): object
+    public function sendButton($request, $receiver): object | bool
     {
         $buttons = [];
         foreach ($request->button as $button) {
@@ -103,7 +99,7 @@ class WhatsappServiceImpl implements WhatsappService
         return $this->sendRequest(self::ROUTE_SEND_BUTTON, $data);
     }
 
-    public function sendTemplate($request, $receiver): object
+    public function sendTemplate($request, $receiver): object | bool
     {
         $templates = [];
 
@@ -134,7 +130,7 @@ class WhatsappServiceImpl implements WhatsappService
     }
 
 
-    public function sendList($request, $receiver): Object
+    public function sendList($request, $receiver): Object | bool
     {
         $section['title'] = $request->title;
         $i = 1;
@@ -158,7 +154,7 @@ class WhatsappServiceImpl implements WhatsappService
         return $this->sendRequest(self::ROUTE_SEND_LIST, $data);
     }
 
-    public function sendPoll($request, $receiver): Object
+    public function sendPoll($request, $receiver): Object | bool
     {
         $optionss = [];
         foreach ($request->option as $opt) {
@@ -177,12 +173,12 @@ class WhatsappServiceImpl implements WhatsappService
         return $this->sendRequest(self::ROUTE_SEND_LIST, $data);
     }
 
-    public function logoutDevice($device): object
+    public function logoutDevice($device): object | bool
     {
         return $this->sendRequest(self::ROUTE_LOGOUT_DEVICE, ['token' => $device]);
     }
 
-    public function checkNumber($device, $number): object
+    public function checkNumber($device, $number): object | bool
     {
 
         return $this->sendRequest(self::ROUTE_CHECK_NUMBER, ['token' => $device, 'number' => $number]);
